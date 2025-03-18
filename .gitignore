@@ -1,0 +1,31 @@
+# Node Modules
+node_modules/
+
+# Distribution
+dist/
+build/
+
+# Temporary files and folders
+.angular/
+.cache/
+.vscode/
+*.log
+*.lock
+*.map
+*.metadata.json
+
+# IDE specific files
+.idea/
+*.iml
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Dependencies
+package-lock.json
+yarn.lock
+
+# Optional: Environment files (keep sensitive data out of the repo)
+.env
+.env.*
