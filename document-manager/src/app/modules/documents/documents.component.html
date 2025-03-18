@@ -1,0 +1,75 @@
+<div class="container">
+  <mat-card>
+    <mat-card-content>
+      <div class="filter-container">
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select
+            [ngModel]="filterStatus()"
+            (ngModelChange)="filterStatus.set($event)"
+            (selectionChange)="applyFilters()"
+          >
+            <mat-option *ngFor="let status of documentStatuses" [value]="status.value">
+              {{ status.viewValue }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" *ngIf="user()?.role === userRoles.Reviewer">
+          <mat-label>Creator</mat-label>
+          <mat-select 
+            [ngModel]="filterCreator()"
+            (ngModelChange)="filterCreator.set($event)"
+            (selectionChange)="applyFilters()"
+          >
+            <mat-option value="">All</mat-option>
+            <mat-option *ngFor="let creator of creators; trackBy: trackByCreatorId" [value]="creator.id">
+              {{ creator.fullName }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <table mat-table [dataSource]="documents()" class="documents-table" matSort (matSortChange)="onSortChange($event)">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let row">{{ row.status }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="creator" *ngIf="user()?.role === userRoles.Reviewer">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Created by</th>
+          <td mat-cell *matCellDef="let row">{{ row.creator.fullName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="updatedAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated at</th>
+          <td mat-cell *matCellDef="let row">{{ row.updatedAt | date: 'dd.MM.yyyy HH:mm' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let row">
+            </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <mat-paginator
+        [length]="totalDocuments"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        (page)="onPageChange($event)"
+        [pageSizeOptions]="[5, 10, 25, 100]"
+        aria-label="Select page">
+      </mat-paginator>
+
+    </mat-card-content>
+  </mat-card>
+</div>
