@@ -1,0 +1,33 @@
+.add-document {
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    margin-top: 24px;
+
+    &--field {
+      width: 100%;
+    }
+
+    &--upload {
+      button {
+        margin-right: 12px;
+      }
+    }
+
+    &--actions {
+      display: flex;
+      gap: 24px;
+      button {
+        flex: 1;
+      }
+    }
+  }
+}
+
+.file-name {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 200px;
+}

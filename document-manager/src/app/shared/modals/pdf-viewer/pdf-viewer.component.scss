@@ -1,0 +1,16 @@
+.pdf-viewer {
+  display: flex; 
+  flex-direction: column; 
+  height: 100%;
+
+  &__actions {
+    button {
+      margin-left: 12px;
+    }
+  }
+}
+
+
+.toolbar-spacer {
+  width: 100%;
+}

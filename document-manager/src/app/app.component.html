@@ -1,1 +1,14 @@
+<mat-toolbar color="primary">
+  <span>Document viewer</span>
+
+  <!-- This fills the remaining space of the current row -->
+  <span class="example-fill-remaining-space"></span>
+
+  <ng-container *ngIf="isAuthenticated()">
+    <button mat-raised-button color="secondary" (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </ng-container>
+</mat-toolbar>
 <router-outlet></router-outlet>

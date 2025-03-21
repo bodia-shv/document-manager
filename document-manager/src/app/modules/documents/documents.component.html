@@ -1,65 +1,147 @@
-<div class="container">
+<div class="documents">
   <mat-card>
     <mat-card-content>
-      <div class="filter-container">
-        <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
-          <mat-select
-            [ngModel]="filterStatus()"
-            (ngModelChange)="filterStatus.set($event)"
-            (selectionChange)="applyFilters()"
-          >
-            <mat-option *ngFor="let status of documentStatuses" [value]="status.value">
-              {{ status.viewValue }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" *ngIf="user()?.role === userRoles.Reviewer">
-          <mat-label>Creator</mat-label>
-          <mat-select 
-            [ngModel]="filterCreator()"
-            (ngModelChange)="filterCreator.set($event)"
-            (selectionChange)="applyFilters()"
-          >
-            <mat-option value="">All</mat-option>
-            <mat-option *ngFor="let creator of creators; trackBy: trackByCreatorId" [value]="creator.id">
-              {{ creator.fullName }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+      <div class="documents__header">
+        <div class="documents__header--filters">
+          <mat-form-field class="documents__header--filters-item" appearance="outline" tabindex="0">
+            <mat-label>Status</mat-label>
+            <mat-select
+              [ngModel]="filterStatus()"
+              (ngModelChange)="filterStatus.set($event)"
+              (selectionChange)="applyFilters()"
+            >
+              <mat-option *ngFor="let status of documentStatuses" [value]="status.value">
+                {{ status.viewValue }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+  
+          <mat-form-field class="documents__header--filters-item" appearance="outline" tabindex="0" *ngIf="user()?.role === userRoles.Reviewer" (click)="stopPropagation($event)">
+            <mat-label>Creator</mat-label>
+            <mat-select [(ngModel)]="filterCreator" (selectionChange)="applyFilters()">
+              <mat-option>
+                <ngx-mat-select-search [placeholderLabel]="'Search creators...'" [noEntriesFoundLabel]="'No results'" ngModel (ngModelChange)="filterCreators($event)"></ngx-mat-select-search>
+              </mat-option>
+              <mat-option value="">All</mat-option>
+              <mat-option *ngFor="let creator of filteredCreators()" [value]="creator.id">
+                {{ creator.fullName }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div>
+          <button mat-raised-button *ngIf="user()?.role === userRoles.User" color="primary" (click)="openAddDocumentDialog()">Add document</button>
+        </div>
       </div>
 
-      <table mat-table [dataSource]="documents()" class="documents-table" matSort (matSortChange)="onSortChange($event)">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-          <td mat-cell *matCellDef="let row">{{ row.status }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="creator" *ngIf="user()?.role === userRoles.Reviewer">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Created by</th>
-          <td mat-cell *matCellDef="let row">{{ row.creator.fullName }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="updatedAt">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Updated at</th>
-          <td mat-cell *matCellDef="let row">{{ row.updatedAt | date: 'dd.MM.yyyy HH:mm' }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef>Actions</th>
-          <td mat-cell *matCellDef="let row">
+      <div class="documents__container--table">
+        <table mat-table [dataSource]="documents()" class="documents__table" matSort (matSortChange)="onSortChange($event)">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="documents__table--col-name">Name</th>
+            <td mat-cell *matCellDef="let row" class="documents__table--col-name truncate-text">
+              <div class="table-truncate__wr">
+                <div class="table-truncate__text">{{ row.name }}</div>
+              </div>
             </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
+          </ng-container>
+  
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="documents__table--col-status">Status</th>
+            <td mat-cell *matCellDef="let row" class="documents__table--col-status">
+              <div class="table-truncate__wr">
+                <div class="table-truncate__text">{{ row.status }}</div>
+              </div>
+            </td>
+          </ng-container>
+  
+          <ng-container matColumnDef="creator" *ngIf="user()?.role === userRoles.Reviewer">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="documents__table--col-creator">Created by</th>
+            <td mat-cell *matCellDef="let row" class="documents__table--col-creator">
+              <div class="table-truncate__wr">
+                <div class="table-truncate__text">{{ row.creator?.fullName }}</div>
+              </div>
+            </td>
+          </ng-container>
+  
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="documents__table--col-updated">Updated at</th>
+            <td mat-cell *matCellDef="let row" class="documents__table--col-updated">
+              <div class="table-truncate__wr">
+                <div class="table-truncate__text">{{ row.updatedAt | date: 'dd.MM.yyyy HH:mm' }}</div>
+              </div>
+            </td>
+          </ng-container>
+  
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef  class="documents__table--col-actions">Actions</th>
+            <td mat-cell *matCellDef="let row"  class="documents__table--col-actions">
+              <div class="actions__container" *ngIf="user()?.role === userRoles.User; else reviewRoleActions">
+                <button 
+                  mat-icon-button 
+                  color="warn" 
+                  (click)="deleteDocument(row.id, $event)" 
+                  *ngIf="row.status === statuses.Draft || row.status === statuses.Revoke"
+                  matTooltip="Delete document"
+                >
+                  <mat-icon class="warn">delete</mat-icon>
+                </button>
+                <button 
+                  mat-icon-button 
+                  color="primary" 
+                  (click)="revokeDocument(row.id, $event)" 
+                  *ngIf="row.status === statuses.ReadyForReview"
+                  matTooltip="Revoke document"
+                >
+                  <mat-icon>undo</mat-icon>
+                </button>
+                <button 
+                  mat-icon-button 
+                  color="primary" 
+                  (click)="editDocument(row.id, $event)"
+                  matTooltip="Edit document"
+                > 
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+              
+              <ng-template #reviewRoleActions >
+                <div class="actions__container">
+                  <button 
+                    mat-icon-button 
+                    color="primary" 
+                    (click)="changeDocumentStatus(row.id, statuses.UnderReview, row.status, $event)" 
+                    *ngIf="row.status === statuses.ReadyForReview"
+                    matTooltip="Set in review"
+                  >
+                    <mat-icon>assignment_turned_in</mat-icon>
+                  </button>
+                  <button 
+                    mat-icon-button 
+                    color="primary" 
+                    (click)="changeDocumentStatus(row.id, statuses.Approved, row.status, $event)" 
+                    *ngIf="row.status === statuses.UnderReview"
+                    matTooltip="Approve"
+                  >
+                    <mat-icon>check_circle</mat-icon>
+                  </button>
+                  <button 
+                    mat-icon-button 
+                    color="warn" 
+                    (click)="changeDocumentStatus(row.id, statuses.Declined, row.status, $event)" 
+                    *ngIf="row.status === statuses.UnderReview"
+                    matTooltip="Decline"
+                  >
+                    <mat-icon class="warn">cancel</mat-icon>
+                  </button>
+                </div>
+              </ng-template>
+            </td>
+          </ng-container>
+  
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="viewDocument(row.id)"></tr>
+        </table>
+      </div>
 
       <mat-paginator
         [length]="totalDocuments"

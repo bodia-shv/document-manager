@@ -1,0 +1,68 @@
+<div class="pdf-viewer">
+  <mat-toolbar color="primary">
+    <span>{{ data.document.name }}</span>
+    <span class="toolbar-spacer"></span>
+    <button mat-icon-button (click)="dialogRef.close()" matTooltip="Close modal">
+      <mat-icon color="primary">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div id="nutrient-container" style="width: 100%; height: 65vh;"></div>
+
+  <mat-dialog-actions align="end" *ngIf="data.userRole" class="pdf-viewer__actions">
+    <div *ngIf="data.userRole === userRoles.User">
+      <button 
+        mat-raised-button 
+        color="warn" 
+        (click)="deleteDocument()" 
+        *ngIf="data.document.status === statuses.Draft || data.document.status === statuses.Revoke"
+        matTooltip="Delete document"
+        [disabled]="isLoading"
+      >
+        Delete
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="revokeDocument()" 
+        *ngIf="data.document.status === statuses.ReadyForReview"
+        matTooltip="Revoke document"
+        [disabled]="isLoading"
+      >
+        Revoke
+      </button>
+    </div>
+
+    <div *ngIf="data.userRole === userRoles.Reviewer">
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="changeStatus(statuses.UnderReview)" 
+        *ngIf="data.document.status === statuses.ReadyForReview"
+        matTooltip="Set in review"
+        [disabled]="isLoading"
+      >
+        In Review
+      </button>
+      <button 
+        mat-raised-button 
+        color="warn" 
+        (click)="changeStatus(statuses.Declined)" 
+        *ngIf="data.document.status === statuses.UnderReview"
+        matTooltip="Decline"
+        [disabled]="isLoading"
+      >
+        Decline
+      </button>
+      <button 
+        mat-raised-button 
+        color="primary" 
+        (click)="changeStatus(statuses.Approved)" 
+        *ngIf="data.document.status === statuses.UnderReview"
+        matTooltip="Approve"
+        [disabled]="isLoading"
+      >
+        Approve
+      </button>
+    </div>
+  </mat-dialog-actions>
+</div>

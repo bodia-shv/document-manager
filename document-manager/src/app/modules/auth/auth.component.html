@@ -4,18 +4,25 @@
       <mat-card-title class="login-form__title">Sign in</mat-card-title>
     </mat-card-header>
     <mat-card-content class="login-form__content">
-      <form (ngSubmit)="login()" class="login-form__form">
+      <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-form__form">
         <mat-form-field appearance="outline" class="login-form__form-field">
           <mat-label class="login-form__label">Email</mat-label>
-          <input matInput placeholder="Введіть ваш email" [(ngModel)]="email" name="email" required class="login-form__input">
+          <input 
+            matInput 
+            formControlName="email" 
+            required 
+            class="login-form__input" />
+          <mat-error *ngIf="loginForm.get('email')?.hasError('required')">Email is required</mat-error>
+          <mat-error *ngIf="loginForm.get('email')?.hasError('email') || loginForm.get('email')?.hasError('pattern')">Please enter a valid email address</mat-error>
         </mat-form-field>
-  
+
         <mat-form-field appearance="outline" class="login-form__form-field">
-          <mat-label class="login-form__label">Пароль</mat-label>
-          <input matInput placeholder="Введіть ваш пароль" [(ngModel)]="password" name="password" type="password" required class="login-form__input">
+          <mat-label class="login-form__label">Password</mat-label>
+          <input matInput formControlName="password" type="password" required class="login-form__input" />
+          <mat-error *ngIf="loginForm.get('password')?.hasError('required')">Password is required</mat-error>
         </mat-form-field>
-  
-        <button mat-stroked-button color="primary" type="submit" class="login-form__button">Enter</button>
+
+        <button mat-stroked-button color="primary" type="submit" class="login-form__button" [disabled]="!loginForm.valid || isLoading">Enter</button>
       </form>
     </mat-card-content>
   </mat-card>

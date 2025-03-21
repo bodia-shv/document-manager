@@ -11,7 +11,7 @@ export const routes: Routes = [
     loadChildren: () => import('./modules/documents/documents.module').then((m) => m.DocumentsModule),
     canActivate: [AuthGuard]
   },
-  { path: '', redirectTo: '/sign-in', pathMatch: 'full' },
+  { path: '', redirectTo: '/documents', pathMatch: 'full' },
   {
     path: '**',
     redirectTo: '/',

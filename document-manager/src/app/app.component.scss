@@ -1,0 +1,8 @@
+mat-tolbar .mat-toolbar-row, .mat-toolbar-single-row {
+  justify-content: space-between;
+  max-width: var(--max-content-width);
+  margin: 0px auto;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  height: 80px;
+}

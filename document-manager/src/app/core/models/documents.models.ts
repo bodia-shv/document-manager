@@ -18,10 +18,12 @@ export interface IDocumentCreator {
 
 export interface IDocument {
   id: string;
-  file: string; 
+  name: string;
+  fileUrl: string; 
   status: EDocumentStatus;
-  creator?: string; 
+  creator?: IDocumentCreator; 
   updatedAt: Date;
+  createdAt: Date;
 }
 
 export interface IDocumentResponse {

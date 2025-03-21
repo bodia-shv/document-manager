@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
 import { Subject, switchMap, takeUntil, of, expand, EMPTY, reduce, map } from 'rxjs';
 import { PageEvent } from '@angular/material/paginator';
 import { EUserType, IUser } from '../../core/models/user.model';
@@ -6,6 +6,12 @@ import { EDocumentStatus, IDocument } from '../../core/models/documents.models';
 import { ProfileService } from '../../core/services/profile/profile.service';
 import { DocumentService } from '../../core/services/documents/documents.service';
 import { Sort } from '@angular/material/sort';
+import { MatDialog } from '@angular/material/dialog';
+import { DocumentAddComponent } from './components/add-document-modal/add-document-modal.component';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ConfirmDialogComponent } from '../../shared/modals/confirm-dialog/confirm-dialog.component';
+import { PdfViewerComponent } from '../../shared/modals/pdf-viewer/pdf-viewer.component';
+import { NOTIF_DURATION } from '../../shared/helpers/_consts';
 
 @Component({
   selector: 'app-documents',
@@ -26,6 +32,9 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   public filterStatus = signal<string | undefined>(undefined);
   public filterCreator = signal<string | undefined>(undefined);
   public readonly userRoles = EUserType;
+  public readonly statuses = EDocumentStatus;
+  private creators: WritableSignal<IUser[]> = signal([]);
+  public filteredCreators: WritableSignal<IUser[]> = signal([]);
 
   public documentStatuses = [
     { value: '', viewValue: 'All' },
@@ -37,11 +46,12 @@ export class DocumentsComponent implements OnInit, OnDestroy {
     { value: EDocumentStatus.Declined, viewValue: 'Declined' },
   ];
 
-  public creators!: IUser[];
 
   constructor(
     private readonly profileService: ProfileService,
-    private readonly documentService: DocumentService
+    private readonly documentService: DocumentService,
+    private readonly dialog: MatDialog,
+    private readonly snackBar: MatSnackBar,
   ) {}
 
   ngOnInit(): void {
@@ -137,11 +147,150 @@ export class DocumentsComponent implements OnInit, OnDestroy {
       map((res) => res.results),
       reduce((allUsers: IUser[], currentUsers: IUser[]) => allUsers.concat(currentUsers), [])
     ).subscribe(users => {
-      this.creators = users;
+      this.creators.set(users);
+      this.filteredCreators.set(users);
     });
+  }
+
+  filterCreators(query: string): void {
+    const filterValue = query.toLowerCase();
+    this.filteredCreators.set(
+      this.creators().filter((creator) =>
+        creator.fullName.toLowerCase().includes(filterValue) ||
+        creator.id.toLowerCase().includes(filterValue)
+      )
+    );
+  }
+
+  openAddDocumentDialog(): void {
+    const dialogRef = this.dialog.open(DocumentAddComponent, {
+      width: '500px',
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadDocuments();
+      }
+    });
+  }
+
+  deleteDocument(id: string, e: Event): void {
+    this.stopPropagation(e);
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '300px',
+      data: { message: 'Do you really want to delete this document?' }
+    });
+  
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.documentService.deleteDocument(id).pipe(
+          takeUntil(this.destroy$)
+        ).subscribe({
+          next: () => {
+            this.snackBar.open('Document deleted', 'Close', { duration: NOTIF_DURATION });
+            this.loadDocuments();
+          },
+          error: (error) => {
+            this.snackBar.open(error.error.message, 'Close', { duration: NOTIF_DURATION });
+          }
+        });
+      }
+    });
+  }
+
+  revokeDocument(id: string, e: Event): void {
+    this.stopPropagation(e);
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '300px',
+      data: { message: 'Revoke this document?' }
+    });
+  
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.documentService.revokeDocument(id).pipe(
+          takeUntil(this.destroy$)
+        ).subscribe({
+          next: () => {
+            this.snackBar.open('Document revoked', 'Close', { duration: NOTIF_DURATION });
+            this.loadDocuments();
+          },
+          error: (error) => {
+            this.snackBar.open(error.error.message, 'Close', { duration: NOTIF_DURATION });
+          }
+        });
+      }
+    });
+  }
+
+  editDocument(id: string, e: Event): void {
+    this.stopPropagation(e);
+    this.documentService.getDocument(id).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (document: IDocument) => {
+        const dialogRef = this.dialog.open(DocumentAddComponent, {
+          width: '500px',
+          data: { documentName: document.name, documentId: document.id }
+        });
+  
+        dialogRef.afterClosed().subscribe(result => {
+          if (result) {
+            this.loadDocuments();
+          }
+        });
+      },
+      error: (error) => {
+        this.snackBar.open(error.error.message, 'Close', { duration: NOTIF_DURATION });
+      }
+    });
+  }
+
+  viewDocument(id: string): void {
+    this.documentService.getDocument(id).subscribe((document) => {
+      const dialogRef = this.dialog.open(PdfViewerComponent, {
+        width: '90%',
+        data: {
+          document: document,
+          userRole: this.user()?.role,
+        },
+      });
+    
+      dialogRef.afterClosed().subscribe(() => {
+        this.loadDocuments();
+      });
+    });
+  }
+
+  changeDocumentStatus(id: string, status: EDocumentStatus, rowStatus: EDocumentStatus, e: Event): void {
+    this.stopPropagation(e);
+    let allowedStatuses: EDocumentStatus[] = [];
+  
+    if (rowStatus === this.statuses.ReadyForReview) {
+      allowedStatuses = [this.statuses.UnderReview];
+    } else if (rowStatus === this.statuses.UnderReview) {
+      allowedStatuses = [this.statuses.Approved, this.statuses.Declined];
+    }
+  
+    if (allowedStatuses.includes(status)) {
+      this.documentService.changeDocumentStatus(id, status).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: () => {
+          this.snackBar.open('Status changed', 'Close', { duration: NOTIF_DURATION });
+          this.loadDocuments();
+        },
+        error: (error) => {
+          this.snackBar.open(error.error.message, 'Close', { duration: NOTIF_DURATION });
+        }
+      });
+    }
   }
 
   trackByCreatorId(index: number, creator: IUser): string {
     return creator.id;
+  }
+
+  stopPropagation(event: Event): void {
+    event.stopPropagation();
   }
 }

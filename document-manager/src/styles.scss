@@ -1,10 +1,84 @@
+// src/styles.scss
 @use '@angular/material' as mat;
+@use './app/shared/styles/variables';
 
-html, body {
-  height: 100%;
+html {
+  @include mat.theme((
+    color: (
+      primary: mat.$cyan-palette,
+      tertiary: mat.$spring-green-palette,
+      theme-type: light,
+    ),
+    typography: Roboto,
+    density: -5
+  ));
+}
+body {
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
 }
 
+html,
+body {
+  height: 100%;
+}
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+button {
+  &.mat-secondary {
+    &:not(:disabled) {
+      background-color: var(--button-secondary-bg);
+    }
+  }
+
+  &.mat-primary {
+    &:not(:disabled) {
+      background-color: var(--button-primary-bg);
+      color: var(--button-primary-color);
+      &:hover {
+        background-color: var(--button-primary-hover-bg);
+      }
+    }
+  }
+
+  &.mat-warn {
+    &:not(:disabled) {
+      background-color: var(--button-warn-bg);
+      color: var(--button-warn-color);
+      &:hover {
+        background-color: var(--button-warn-hover-bg);
+      }
+    }
+  }
+}
+
+
+mat-card-title {
+  color: var(--title-primary-color);
+}
+
+.table-truncate {
+  &__wr {
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+  }
+  &__text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.truncate-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cdk-overlay-pane.mat-mdc-dialog-panel {
+  max-width: 100%!important;
 }
